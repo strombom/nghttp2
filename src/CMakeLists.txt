@@ -272,34 +272,89 @@ if(ENABLE_ASIO_LIB)
     asio_client_stream.cc
     asio_client_tls_context.cc
   )
+  
+  if(ENABLE_SHARED_LIB)
+    add_library(nghttp2_asio SHARED
+       ${NGHTTP2_ASIO_SOURCES}
+       $<TARGET_OBJECTS:llhttp>
+       $<TARGET_OBJECTS:url-parser>
+    )
+    target_include_directories(nghttp2_asio PRIVATE
+      ${OPENSSL_INCLUDE_DIRS}
+      ${Boost_INCLUDE_DIRS}
+    )
+    target_include_directories(nghttp2_asio INTERFACE
+      "${CMAKE_CURRENT_BINARY_DIR}/../lib/includes"
+      "${CMAKE_CURRENT_SOURCE_DIR}/../lib/includes"
+      "${CMAKE_CURRENT_SOURCE_DIR}/includes"
+    )
+    target_link_libraries(nghttp2_asio
+      nghttp2
+      ${OPENSSL_LIBRARIES}
+      ${Boost_LIBRARIES}
+    )
+    set_target_properties(nghttp2_asio PROPERTIES
+      VERSION 1.0.0 SOVERSION 1)
 
-  add_library(nghttp2_asio SHARED
-     ${NGHTTP2_ASIO_SOURCES}
-     $<TARGET_OBJECTS:llhttp>
-     $<TARGET_OBJECTS:url-parser>
-  )
-  target_include_directories(nghttp2_asio PRIVATE
-    ${OPENSSL_INCLUDE_DIRS}
-    ${Boost_INCLUDE_DIRS}
-  )
-  target_include_directories(nghttp2_asio INTERFACE
-    "${CMAKE_CURRENT_BINARY_DIR}/../lib/includes"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../lib/includes"
-    "${CMAKE_CURRENT_SOURCE_DIR}/includes"
-  )
-  target_link_libraries(nghttp2_asio
-    nghttp2
-    ${OPENSSL_LIBRARIES}
-    ${Boost_LIBRARIES}
-  )
-  set_target_properties(nghttp2_asio PROPERTIES
-    VERSION 1.0.0 SOVERSION 1)
+    install(TARGETS nghttp2_asio
+      ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+      LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+      RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
 
-  install(TARGETS nghttp2_asio
-    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libnghttp2_asio.pc"
+      DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+  endif()
 
-  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libnghttp2_asio.pc"
-    DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+  if (ENABLE_STATIC_LIB)
+    set(NGHTTP2_SOURCES
+      ../lib/nghttp2_pq.c
+      ../lib/nghttp2_map.c ../lib/nghttp2_queue.c
+      ../lib/nghttp2_frame.c
+      ../lib/nghttp2_buf.c
+      ../lib/nghttp2_stream.c ../lib/nghttp2_outbound_item.c
+      ../lib/nghttp2_session.c ../lib/nghttp2_submit.c
+      ../lib/nghttp2_helper.c
+      ../lib/nghttp2_npn.c
+      ../lib/nghttp2_hd.c ../lib/nghttp2_hd_huffman.c ../lib/nghttp2_hd_huffman_data.c
+      ../lib/nghttp2_version.c
+      ../lib/nghttp2_priority_spec.c
+      ../lib/nghttp2_option.c
+      ../lib/nghttp2_callbacks.c
+      ../lib/nghttp2_mem.c
+      ../lib/nghttp2_http.c
+      ../lib/nghttp2_rcbuf.c
+      ../lib/nghttp2_debug.c
+    )
+
+    add_library(nghttp2_asio_static STATIC
+       ${NGHTTP2_ASIO_SOURCES}
+       ${NGHTTP2_SOURCES}
+       $<TARGET_OBJECTS:llhttp>
+       $<TARGET_OBJECTS:url-parser>
+    )
+    target_include_directories(nghttp2_asio_static PRIVATE
+      ${OPENSSL_INCLUDE_DIRS}
+      ${Boost_INCLUDE_DIRS}
+    )
+    target_include_directories(nghttp2_asio_static INTERFACE
+      "${CMAKE_CURRENT_BINARY_DIR}/../lib/includes"
+      "${CMAKE_CURRENT_SOURCE_DIR}/../lib/includes"
+      "${CMAKE_CURRENT_SOURCE_DIR}/includes"
+    )
+    target_link_libraries(nghttp2_asio_static
+      ${OPENSSL_LIBRARIES}
+      ${Boost_LIBRARIES}
+    )
+    set_target_properties(nghttp2_asio_static PROPERTIES
+      VERSION 1.0.0 SOVERSION 1
+      ARCHIVE_OUTPUT_NAME nghttp2_asio${STATIC_LIB_SUFFIX}
+    )
+
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libnghttp2_asio.pc"
+      DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+
+    install(TARGETS nghttp2_asio_static
+      DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    )
+  endif()
 endif()
